@@ -8,6 +8,11 @@ public class HomeController {
 
     @GetMapping("/")
     public String home() {
-        return "login";
+        return "index";  // This should be your landing page
+    }
+    
+    @GetMapping("/login-choice")
+    public String loginChoice() {
+        return "login-choice";
     }
 }

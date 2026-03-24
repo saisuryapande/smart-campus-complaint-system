@@ -5,12 +5,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
 import com.example.demo.entity.Complaint;
 import com.example.demo.entity.User;
 import com.example.demo.service.ComplaintService;
-import com.example.demo.service.EmailService;  // NEW IMPORT
-
+import com.example.demo.service.EmailService;
+import com.example.demo.service.UserService;
 import jakarta.servlet.http.HttpSession;
 import java.util.List;
 import java.util.Optional;
@@ -23,12 +22,38 @@ public class AdminController {
     ComplaintService complaintService;
     
     @Autowired
-    EmailService emailService;  // NEW AUTOWIRE
+    EmailService emailService;
+    
+    @Autowired
+    UserService userService;
+
+    @GetMapping("/login")
+    public String adminLoginPage() {
+        return "admin-login";
+    }
+
+    @PostMapping("/login")
+    public String adminLogin(@RequestParam String email,
+                             @RequestParam String password,
+                             HttpSession session,
+                             RedirectAttributes ra) {
+
+        User user = userService.login(email, password);
+
+        if (user == null || !"ADMIN".equals(user.getRole())) {
+            ra.addFlashAttribute("error", "❌ Invalid admin credentials");
+            return "redirect:/admin/login";
+        }
+
+        session.setAttribute("loggedUser", user);
+        ra.addFlashAttribute("success", "✅ Welcome Admin!");
+        return "redirect:/admin/dashboard";
+    }
 
     @GetMapping("/dashboard")
     public String dashboard(Model model, HttpSession session) {
         if (session.getAttribute("loggedUser") == null) {
-            return "redirect:/users/login";
+            return "redirect:/admin/login";
         }
         
         List<Complaint> complaints = complaintService.getAllComplaints();
@@ -53,20 +78,17 @@ public class AdminController {
                                RedirectAttributes ra,
                                HttpSession session) {
         if (session.getAttribute("loggedUser") == null) {
-            return "redirect:/users/login";
+            return "redirect:/admin/login";
         }
         
-        // Get complaint and user before update
         Optional<Complaint> complaintOpt = complaintService.getComplaintById(id);
         if (complaintOpt.isPresent()) {
             Complaint complaint = complaintOpt.get();
             String oldStatus = complaint.getStatus();
             User user = complaint.getUser();
             
-            // Update status
             complaintService.updateStatus(id, status);
             
-            // NEW: Send email if status changed and user exists
             if (user != null && !oldStatus.equals(status)) {
                 emailService.sendStatusUpdateEmail(complaint, user, oldStatus, status);
             }
@@ -81,15 +103,22 @@ public class AdminController {
                                   RedirectAttributes ra,
                                   HttpSession session) {
         if (session.getAttribute("loggedUser") == null) {
-            return "redirect:/users/login";
+            return "redirect:/admin/login";
         }
         
         try {
             complaintService.deleteComplaint(id);
-            ra.addFlashAttribute("success", "Complaint #" + id + " has been deleted successfully");
+            ra.addFlashAttribute("success", "Complaint #" + id + " has been deleted");
         } catch (Exception e) {
-            ra.addFlashAttribute("error", "Error deleting complaint #" + id);
+            ra.addFlashAttribute("error", "Error deleting complaint");
         }
         return "redirect:/admin/dashboard";
+    }
+    
+    @GetMapping("/logout")
+    public String logout(HttpSession session, RedirectAttributes ra) {
+        session.invalidate();
+        ra.addFlashAttribute("success", "Logged out successfully");
+        return "redirect:/";
     }
 }

@@ -2,7 +2,6 @@ package com.example.demo.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.example.demo.entity.User;
 import com.example.demo.repository.UserRepository;
 
@@ -19,7 +18,6 @@ public class UserService {
     }
     
     public User registerUser(User user) {
-        // Set default role if not specified
         if (user.getRole() == null || user.getRole().isEmpty()) {
             user.setRole("USER");
         }

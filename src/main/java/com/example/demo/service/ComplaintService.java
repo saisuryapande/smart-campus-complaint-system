@@ -2,11 +2,9 @@ package com.example.demo.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;  // NEW IMPORT
-
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import com.example.demo.entity.Complaint;
 import com.example.demo.entity.User;
 import com.example.demo.repository.ComplaintRepository;
@@ -21,7 +19,6 @@ public class ComplaintService {
         return complaintRepository.findAll();
     }
     
-    // NEW METHOD - Add this
     public Optional<Complaint> getComplaintById(Long id) {
         return complaintRepository.findById(id);
     }
